@@ -79,7 +79,7 @@ runcmd:
   - a2dissite default-ssl.conf || true
   - rm -rf /etc/apache2/sites-available/000-default.conf
   - rm -rf /etc/apache2/sites-available/default-ssl.conf
-
+  - systemctl reload apache2
 
 write_files:
 
