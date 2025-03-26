@@ -74,9 +74,6 @@ runcmd:
   - chown -R www-data:www-data /var/www/wordpress
   - chmod -R 755 /var/www/wordpress
 
-  # Disable XML-RPC
-  - bash -c 'echo "<Files xmlrpc.php>\nOrder Deny,Allow\nDeny from all\n</Files>" >> /var/www/wordpress/.htaccess'
-
   # Remove default Apache site
   - a2dissite 000-default.conf || true
   - a2dissite default-ssl.conf || true
@@ -85,6 +82,14 @@ runcmd:
 
 
 write_files:
+
+  # Disable XML-RPC
+  - path: /var/www/wordpress/.htaccess
+    content: |
+      <Files xmlrpc.php>
+        Order Deny,Allow
+        Deny from all
+      </Files>
   - path: /etc/apache2/sites-available/wordpress.conf
     content: |
       <VirtualHost *:80>
