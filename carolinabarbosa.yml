@@ -107,47 +107,53 @@ runcmd:
   # Disable XML-RPC
   - bash -c 'echo "<Files xmlrpc.php>\nOrder Deny,Allow\nDeny from all\n</Files>" >> /var/www/wordpress/.htaccess'
 
-  # Apache virtual host config
-  - bash -c 'cat > /etc/apache2/sites-available/wordpress.conf <<EOF
-    <VirtualHost *:80>
-        ServerAdmin webmaster@localhost
-        ServerName domain.com
-        ServerAlias www.carolinabarbosa.com carolinabarbosa.com.br www.carolinabarbosa.com.br
+  # Remove default Apache site
+  - a2dissite 000-default.conf || true
 
-        Redirect permanent / https://carolinabarbosa.com/
 
-        ErrorLog \${APACHE_LOG_DIR}/error.log
-        CustomLog \${APACHE_LOG_DIR}/access.log combined
-    </VirtualHost>
+write_files:
+  - path: /etc/apache2/sites-available/wordpress.conf
+    content: |
+      <VirtualHost *:80>
+          ServerName carolinabarbosa.com
+          ServerAlias www.carolinabarbosa.com carolinabarbosa.com.br www.carolinabarbosa.com.br
+  
+          RewriteEngine On
+          RewriteCond %{HTTP_HOST} !^carolinabarbosa\\.com$ [NC]
+          RewriteRule ^ https://carolinabarbosa.com%{REQUEST_URI} [L,R=301]
+  
+          ErrorLog \${APACHE_LOG_DIR}/error.log
+          CustomLog \${APACHE_LOG_DIR}/access.log combined
+      </VirtualHost>
+  
+      <IfModule mod_ssl.c>
+      <VirtualHost *:443>
+          ServerName carolinabarbosa.com
+          ServerAlias www.carolinabarbosa.com carolinabarbosa.com.br www.carolinabarbosa.com.br
+          DocumentRoot /var/www/wordpress
+  
+          <Directory /var/www/wordpress>
+              Options -Indexes
+              AllowOverride All
+          </Directory>
+  
+          Header always set X-Content-Type-Options "nosniff"
+          Header always set X-Frame-Options "SAMEORIGIN"
+          Header always set X-XSS-Protection "1; mode=block"
+  
+          ErrorLog \${APACHE_LOG_DIR}/error_ssl.log
+          CustomLog \${APACHE_LOG_DIR}/access_ssl.log combined
+      </VirtualHost>
+      </IfModule>
 
-    <IfModule mod_ssl.c>
-    <VirtualHost *:443>
-        ServerAdmin webmaster@localhost
-        ServerName domain.com
-        DocumentRoot /var/www/wordpress
-
-        <Directory /var/www/wordpress>
-            Options -Indexes
-            AllowOverride All
-        </Directory>
-
-        Header always set X-Content-Type-Options "nosniff"
-        Header always set X-Frame-Options "SAMEORIGIN"
-        Header always set X-XSS-Protection "1; mode=block"
-
-        ErrorLog \${APACHE_LOG_DIR}/error_ssl.log
-        CustomLog \${APACHE_LOG_DIR}/access_ssl.log combined
-    </VirtualHost>
-    </IfModule>
-    EOF'
-
+runcmd:
   - a2ensite wordpress
   - a2enmod rewrite headers ssl
   - systemctl reload apache2
 
   # Request Let's Encrypt certificates for all domains
   - certbot --apache --non-interactive --agree-tos --redirect \
-      --email admin@domain.com \
+      --email admin@carolinabarbosa.com \
       -d carolinabarbosa.com \
       -d www.carolinabarbosa.com \
       -d carolinabarbosa.com.br \
