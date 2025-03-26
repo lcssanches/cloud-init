@@ -109,6 +109,9 @@ runcmd:
 
   # Remove default Apache site
   - a2dissite 000-default.conf || true
+  - a2dissite default-ssl.conf || true
+  - rm /etc/apache2/sites-available/000-default.conf
+  - rm /etc/apache2/sites-available/default-ssl.conf
 
 
 write_files:
@@ -122,8 +125,8 @@ write_files:
           RewriteCond %{HTTP_HOST} !^carolinabarbosa\\.com$ [NC]
           RewriteRule ^ https://carolinabarbosa.com%{REQUEST_URI} [L,R=301]
   
-          ErrorLog \${APACHE_LOG_DIR}/error.log
-          CustomLog \${APACHE_LOG_DIR}/access.log combined
+          ErrorLog ${APACHE_LOG_DIR}/error.log
+          CustomLog ${APACHE_LOG_DIR}/access.log combined
       </VirtualHost>
   
       <IfModule mod_ssl.c>
@@ -141,8 +144,8 @@ write_files:
           Header always set X-Frame-Options "SAMEORIGIN"
           Header always set X-XSS-Protection "1; mode=block"
   
-          ErrorLog \${APACHE_LOG_DIR}/error_ssl.log
-          CustomLog \${APACHE_LOG_DIR}/access_ssl.log combined
+          ErrorLog ${APACHE_LOG_DIR}/error_ssl.log
+          CustomLog ${APACHE_LOG_DIR}/access_ssl.log combined
       </VirtualHost>
       </IfModule>
 
